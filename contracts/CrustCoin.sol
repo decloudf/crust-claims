@@ -30,10 +30,9 @@ contract CrustCoin is ERC20, ERC20Burnable, Ownable {
 		}
 }
 
-contract CrustCrowdsale {
+contract CrustCrowdsale is Ownable {
 	CrustCoin _token;
 	address payable _wallet;
-	address payable _owner;
 	uint _cap;
 	uint _selled;
 
@@ -49,7 +48,6 @@ contract CrustCrowdsale {
     {
 			_token = token;
 			_wallet = wallet;
-			_owner = msg.sender;
 			_cap = cap * (10 ** 18);
 			_selled = 0;
     }
@@ -67,14 +65,13 @@ contract CrustCrowdsale {
  
    //
  	// claim token
- 	function claim(uint amount, string crustAddr) public {
+ 	function claim(uint amount, string memory crustAddr) public {
 		_token.burn(msg.sender, amount);
  		emit ClaimCRU(msg.sender, amount, crustAddr);
  	}
  
- 	function withDraw(uint amount) public {
- 		require(msg.sender == _owner, "only owner can withraw!");
- 		_owner.transfer(amount);
+ 	function withDraw(uint amount) public onlyOwner {
+ 		_wallet.transfer(amount);
     emit WithDraw(amount);
  	}
 }

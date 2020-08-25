@@ -7,5 +7,13 @@ module.exports = async function(deployer) {
   await deployer.deploy(CrustCoin);
   const crustInstance = await CrustCoin.deployed();
   await deployer.deploy(CrustCrowdsale, wallet, CrustCoin.address, 100);
+  //
+  // transfer ownership
+  // make crowdsale contract own the token
   await crustInstance.transferOwnership(CrustCrowdsale.address);
+
+  const crowdSaleInstance = await CrustCrowdsale.deployed();
+  //
+  // transfer the ownership to the wallet address
+  await crowdSaleInstance.transferOwnership(wallet);
 };
