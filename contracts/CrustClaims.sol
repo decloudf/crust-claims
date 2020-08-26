@@ -104,7 +104,7 @@ contract CrustClaimsBase is Ownable {
   }
 
   function _claim(address account, uint amount, bytes32 pubKey) private {
-    require(amount > 0, "claim amount should not should zero");
+    require(amount > 0, "claim amount should not be zero");
     require(pubKey != bytes32(0), "Failed to provide an Ed25519 or SR25519 public key.");
 
     _token.burn(account, amount);
