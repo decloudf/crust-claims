@@ -1,3 +1,4 @@
 node_modules
 build
 cmds.txt
+.log

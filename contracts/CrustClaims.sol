@@ -38,7 +38,9 @@ contract CrustClaimsBase is Ownable {
   uint _cap;
   uint _selled;
 
-  event BuyCRU(address indexed _address, uint256 _value);
+  // event BuyCRU(address indexed _address, uint256 _value);
+  event MintCRU(address indexed _address, uint256 _value);
+  event CapUpdated(uint256 _value);
   event ClaimCRU(address indexed _address, uint256 _value, string crustAddr);
   event WithDraw(uint256 _value);
 
@@ -53,15 +55,34 @@ contract CrustClaimsBase is Ownable {
     _selled = 0;
   }
 
-  function buyCru() public payable {
-    require(msg.value > 0, "should send some eth to buy cru token");
-    uint selled = SafeMath.add(_selled, msg.value);
-    require(selled <= _cap, "not enough token left");
+  //
+  // don't support
+  // function buyCru() public payable {
+  //   require(msg.value > 0, "should send some eth to buy cru token");
+  //   uint selled = SafeMath.add(_selled, msg.value);
+  //   require(selled <= _cap, "not enough token left");
 
+  //   _selled = selled;
+  //   _token.mint(msg.sender, msg.value);
+  //   emit BuyCRU(msg.sender, msg.value);
+  //   _wallet.transfer(msg.value);
+  // }
+
+  function mint(address account, uint amount) public onlyOwner {
+    uint selled = SafeMath.add(_selled, amount);
+    require(selled <= _cap, "not enough token left");
+    _token.mint(account, amount);
     _selled = selled;
-    _token.mint(msg.sender, msg.value);
-    emit BuyCRU(msg.sender, msg.value);
-    _wallet.transfer(msg.value);
+    emit MintCRU(account, amount);
+  }
+
+  //
+  // cap in eth
+  function updateCap(uint amount) public onlyOwner {
+    uint cap = SafeMath.mul(amount, 10 ** 18);
+    require(cap >= _selled, "cap must not less than selled");
+    _cap = cap;
+    emit CapUpdated(cap);
   }
 
   //
