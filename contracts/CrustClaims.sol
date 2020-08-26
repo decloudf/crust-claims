@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 interface ICrustToken {
   function mint(address account, uint amount) external;
   function burn(address account, uint amount) external;
+  function getBalance(address account) external view returns (uint256);
 }
 
 contract CrustToken is ERC20, ERC20Burnable, Ownable, ICrustToken {
@@ -30,6 +31,10 @@ contract CrustToken is ERC20, ERC20Burnable, Ownable, ICrustToken {
   function mint(address account, uint amount) public onlyOwner {
     _mint(account, amount);
   }
+
+  function getBalance(address account) public view returns (uint256) {
+    return balanceOf(account);
+  }
 }
 
 contract CrustClaimsBase is Ownable {
@@ -41,7 +46,7 @@ contract CrustClaimsBase is Ownable {
   // event BuyCRU(address indexed _address, uint256 _value);
   event MintCRU(address indexed _address, uint256 _value);
   event CapUpdated(uint256 _value);
-  event ClaimCRU(address indexed _address, uint256 _value, string crustAddr);
+  event ClaimCRU(address indexed _address, uint256 _value, bytes32 pubKey);
   event WithDraw(uint256 _value);
 
   constructor(
@@ -87,9 +92,23 @@ contract CrustClaimsBase is Ownable {
 
   //
   // claim token
-  function claim(uint amount, string memory crustAddr) public {
-    _token.burn(msg.sender, amount);
-    emit ClaimCRU(msg.sender, amount, crustAddr);
+  function claim(uint amount, bytes32 pubKey) public {
+    _claim(msg.sender, amount, pubKey);
+  }
+
+  //
+  // claim all token in the account
+  function claimAll(bytes32 pubKey) public {
+    uint256 amount = _token.getBalance(msg.sender);
+    _claim(msg.sender, amount, pubKey);
+  }
+
+  function _claim(address account, uint amount, bytes32 pubKey) private {
+    require(amount > 0, "claim amount should not should zero");
+    require(pubKey != bytes32(0), "Failed to provide an Ed25519 or SR25519 public key.");
+
+    _token.burn(account, amount);
+    emit ClaimCRU(account, amount, pubKey);
   }
 
   //
@@ -134,6 +153,10 @@ contract CrustTokenLocked is ICrustToken, Ownable {
 
   function balanceOf(address account) public view returns (uint256) {
     return _balances[account];
+  }
+
+  function getBalance(address account) public view returns (uint256) {
+      return balanceOf(account);
   }
 
   function mint(address account, uint256 amount) public onlyOwner {
