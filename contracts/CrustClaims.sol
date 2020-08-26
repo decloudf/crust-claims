@@ -10,13 +10,13 @@ interface ICrustToken {
   function burn(address account, uint amount) external;
 }
 
-contract CrustCoin is ERC20, ERC20Burnable, Ownable, ICrustToken {
+contract CrustToken is ERC20, ERC20Burnable, Ownable, ICrustToken {
   function name() public pure returns (string memory) {
-    return "crust";
+    return "CRUST";
   }
 
   function symbol() public pure returns (string memory) {
-    return "cru";
+    return "CRU";
   }
 
   function decimals() public pure returns (uint8) {
@@ -32,7 +32,7 @@ contract CrustCoin is ERC20, ERC20Burnable, Ownable, ICrustToken {
   }
 }
 
-contract CrustCrowdsaleBase is Ownable {
+contract CrustClaimsBase is Ownable {
   ICrustToken _token;
   address payable _wallet;
   uint _cap;
@@ -133,36 +133,36 @@ contract CrustTokenLocked is ICrustToken, Ownable {
 }
 
 /* solium-disable-next-line */
-contract CrustTokenLocked18 is CrustTokenLocked("crust18", "cru18") {
+contract CrustTokenLocked18 is CrustTokenLocked("CRUST18", "CRU18") {
 }
 
 /* solium-disable-next-line */
-contract CrustTokenLocked24 is CrustTokenLocked("crust24", "cru24") {
+contract CrustTokenLocked24 is CrustTokenLocked("CRUST24", "CRU24") {
 }
 
-contract CrustCrowdsale is CrustCrowdsaleBase {
+contract CrustClaims is CrustClaimsBase {
   constructor(
               address payable wallet,
-              CrustCoin token,
+              CrustToken token,
               uint cap // cap: unit by eth
-              ) public CrustCrowdsaleBase(wallet, token, cap) {
+              ) public CrustClaimsBase(wallet, token, cap) {
   }
 }
 
-contract CrustCrowdsale18 is CrustCrowdsaleBase {
+contract CrustClaims18 is CrustClaimsBase {
   constructor(
               address payable wallet,
               CrustTokenLocked18 token,
               uint cap // cap: unit by eth
-              ) public CrustCrowdsaleBase(wallet, token, cap) {
+              ) public CrustClaimsBase(wallet, token, cap) {
   }
 }
 
-contract CrustCrowdsale24 is CrustCrowdsaleBase {
+contract CrustClaims24 is CrustClaimsBase {
   constructor(
               address payable wallet,
               CrustTokenLocked24 token,
               uint cap
-              ) public CrustCrowdsaleBase(wallet, token, cap) {
+              ) public CrustClaimsBase(wallet, token, cap) {
   }
 }
