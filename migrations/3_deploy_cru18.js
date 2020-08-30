@@ -1,10 +1,12 @@
 const CrustTokenLocked18 = artifacts.require("CrustTokenLocked18");
 const CrustClaims18 = artifacts.require("CrustClaims18");
+const { getDeployAccounts } = require('../config/accounts')
 
-module.exports = async function(deployer) {
-  const accounts = await web3.eth.getAccounts();
-  const wallet = accounts[1]; //todo: use real account
-  const reviewer = accounts[2];
+module.exports = async function(deployer, network) {
+  const web3Accounts = await web3.eth.getAccounts()
+  const accounts = await getDeployAccounts(network, web3Accounts)
+  const wallet = accounts.owner;
+  const reviewer = accounts.reviewer;
   await deployer.deploy(CrustTokenLocked18);
   const crust18Instance = await CrustTokenLocked18.deployed();
   await deployer.deploy(CrustClaims18, wallet, CrustTokenLocked18.address, 1000 * 10000);

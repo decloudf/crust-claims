@@ -2,3 +2,4 @@ node_modules
 build
 cmds.txt
 .log
+config/deploy_data.js
