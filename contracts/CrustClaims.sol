@@ -38,16 +38,33 @@ contract CrustToken is ERC20, ERC20Burnable, Ownable, ICrustToken {
 }
 
 contract CrustClaimsBase is Ownable {
+  struct ReviewItem {
+    address _target;
+    uint _amount;
+  }
+
   ICrustToken _token;
   address payable _wallet;
+  address private _reviewer;
   uint _cap;
   uint _selled;
+  uint32 _nextReviewId = 0;
+  uint32 _totalReviewItemsCount = 0;
+  mapping (uint32 => ReviewItem) private _reviewItems;
 
   // event BuyCRU(address indexed _address, uint256 _value);
+  event ReviewerChanged(address indexed _reviewer);
+  event MintRequestSubmited(uint32 _reviewId);
+  event MintRequestReviewed(uint32 _reviewId, bool _approve);
   event MintCRU(address indexed _address, uint256 _value);
   event CapUpdated(uint256 _value);
   event ClaimCRU(address indexed _address, uint256 _value, bytes32 pubKey);
   event WithDraw(uint256 _value);
+
+  modifier onlyReviewer() {
+    require(isReviewer(), "CrustClaims: caller is not the reviewer");
+    _;
+  }
 
   constructor(
               address payable wallet,
@@ -58,22 +75,60 @@ contract CrustClaimsBase is Ownable {
     _wallet = wallet;
     _cap = cap * (10 ** 18);
     _selled = 0;
+    _reviewer = msg.sender;
+  }
+
+  function setReviewer(address account) public onlyOwner {
+    require(_reviewer != account, "CrustClaims: reivewer must not the same");
+    _reviewer = account;
+    emit ReviewerChanged(account);
+  }
+
+  function isReviewer() public view returns (bool) {
+    return _msgSender() == _reviewer;
   }
 
   //
-  // don't support
-  // function buyCru() public payable {
-  //   require(msg.value > 0, "should send some eth to buy cru token");
-  //   uint selled = SafeMath.add(_selled, msg.value);
-  //   require(selled <= _cap, "not enough token left");
+  // sumbmit the mint request to the review queue
+  function submitMint(address account, uint amount) public onlyOwner {
+    require(amount > 0, "CrustClaims: amount must be positive");
+    uint32 reviewId = _totalReviewItemsCount;
+    _reviewItems[reviewId] = ReviewItem(account, amount);
+    _totalReviewItemsCount = _totalReviewItemsCount + 1;
+    emit MintRequestSubmited(reviewId);
+  }
 
-  //   _selled = selled;
-  //   _token.mint(msg.sender, msg.value);
-  //   emit BuyCRU(msg.sender, msg.value);
-  //   _wallet.transfer(msg.value);
-  // }
+  function reviewMintRequest(uint32 reviewId, bool approve) public onlyReviewer {
+    require(reviewId == _nextReviewId, "CrustClaims: mint requests should be reviewed by order");
+    require(reviewId < _totalReviewItemsCount, "CrustClaims: invalid reviewId");
+    ReviewItem memory item = _reviewItems[reviewId];
+    if (approve) {
+      _mint (item._target, item._amount);
+    }
+    _nextReviewId = _nextReviewId + 1; // move to next review item
+    delete _reviewItems[reviewId]; // cleanup storage
+    emit MintRequestReviewed(reviewId, approve);
+  }
 
-  function mint(address account, uint amount) public onlyOwner {
+  function getNextReviewId() public view returns (uint32) {
+    return _nextReviewId;
+  }
+
+  function getReviewCount() public view returns (uint32) {
+      return _totalReviewItemsCount;
+  }
+
+  function getUnReviewItemAddress(uint32 reviewId) public view returns (address) {
+    require(reviewId < _totalReviewItemsCount, "CrustClaims: invalid reviewId");
+    return _reviewItems[reviewId]._target;
+  }
+
+  function getUnReviewItemAmount(uint32 reviewId) public view returns (uint) {
+      require(reviewId < _totalReviewItemsCount, "CrustClaims: invalid reviewId");
+      return _reviewItems[reviewId]._amount;
+  }
+
+  function _mint(address account, uint amount) private {
     uint selled = SafeMath.add(_selled, amount);
     require(selled <= _cap, "not enough token left");
     _token.mint(account, amount);
@@ -184,6 +239,10 @@ contract CrustTokenLocked18 is CrustTokenLocked("CRUST18", "CRU18") {
 contract CrustTokenLocked24 is CrustTokenLocked("CRUST24", "CRU24") {
 }
 
+/* solium-disable-next-line */
+contract CrustTokenLocked24Delayed is CrustTokenLocked("CRUST24D", "CRU24D") {
+}
+
 contract CrustClaims is CrustClaimsBase {
   constructor(
               address payable wallet,
@@ -209,4 +268,13 @@ contract CrustClaims24 is CrustClaimsBase {
               uint cap
               ) public CrustClaimsBase(wallet, token, cap) {
   }
+}
+
+contract CrustClaims24Delayed is CrustClaimsBase {
+    constructor(
+                address payable wallet,
+                CrustTokenLocked24Delayed token,
+                uint cap
+                ) public CrustClaimsBase(wallet, token, cap) {
+    }
 }
