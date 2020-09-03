@@ -88,6 +88,10 @@ contract CrustClaimsBase is Ownable {
     return _msgSender() == _reviewer;
   }
 
+  function reviewer() public view returns (address) {
+    return _reviewer;
+  }
+
   //
   // sumbmit the mint request to the review queue
   function submitMint(address account, uint amount) public onlyOwner {
