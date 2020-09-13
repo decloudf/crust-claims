@@ -43,6 +43,9 @@ contract CrustClaimsBase is Ownable {
     uint _amount;
   }
 
+  // max cap limit: 1 billion
+  uint constant HardCap = 1_000_000_000 * (10 ** 18);
+
   ICrustToken _token;
   address payable _wallet;
   address private _reviewer;
@@ -78,7 +81,7 @@ contract CrustClaimsBase is Ownable {
     _reviewer = msg.sender;
   }
 
-  function setReviewer(address account) public onlyOwner {
+  function setReviewer(address account) public onlyReviewer {
     require(_reviewer != account, "CrustClaims: reivewer must not the same");
     _reviewer = account;
     emit ReviewerChanged(account);
@@ -92,7 +95,19 @@ contract CrustClaimsBase is Ownable {
     return _reviewer;
   }
 
-  //
+  function getCap() public view returns(uint) {
+    return _cap;
+  }
+
+  function getSelled() public view returns(uint) {
+    return _selled;
+  }
+
+  function getToken() public view returns(ICrustToken tokenAddress) {
+    return _token;
+  }
+
+   //
   // sumbmit the mint request to the review queue
   function submitMint(address account, uint amount) public onlyOwner {
     require(amount > 0, "CrustClaims: amount must be positive");
@@ -144,6 +159,7 @@ contract CrustClaimsBase is Ownable {
   // cap in eth
   function updateCap(uint amount) public onlyOwner {
     uint cap = SafeMath.mul(amount, 10 ** 18);
+    require(cap <= HardCap, "cap must not exceed hard cap limit");
     require(cap >= _selled, "cap must not less than selled");
     _cap = cap;
     emit CapUpdated(cap);
