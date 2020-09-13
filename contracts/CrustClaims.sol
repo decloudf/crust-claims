@@ -11,7 +11,7 @@ interface ICrustToken {
   function getBalance(address account) external view returns (uint256);
 }
 
-contract CrustToken is ERC20, ERC20Burnable, Ownable, ICrustToken {
+contract CrustToken is ERC20, Ownable, ICrustToken {
   function name() public pure returns (string memory) {
     return "CRUST";
   }
